@@ -10,6 +10,7 @@ CERT_END   = "-----END CERTIFICATE-----"
 
 RSA_START  = "-----BEGIN RSA PRIVATE KEY-----"
 RSA_END    = "-----END RSA PRIVATE KEY-----"
+DEFAULT_PORT = "1194"
 
 # Python 2.x Workaround
 if hasattr(__builtins__, 'raw_input'):
@@ -297,6 +298,8 @@ class APCFile(object):
       try:
          self.content["server_address"] = []
          for v in value:
+            if " " not in v:
+               v = v + " " + DEFAULT_PORT
             server, port = v.split(" ")
             if self.content.get("server_port") == "":
                self.content["server_port"] = port
