@@ -3,13 +3,15 @@ import json
 import sys
 import argparse
 import os.path
+import re
 from Crypto.PublicKey import RSA
 
 CERT_START = "-----BEGIN CERTIFICATE-----"
 CERT_END   = "-----END CERTIFICATE-----"
 
-RSA_START  = "-----BEGIN RSA PRIVATE KEY-----"
-RSA_END    = "-----END RSA PRIVATE KEY-----"
+RSA_START  = "-----BEGIN PRIVATE KEY-----"
+RSA_END    = "-----END PRIVATE KEY-----"
+
 DEFAULT_PORT = "1194"
 
 # Python 2.x Workaround
@@ -148,12 +150,28 @@ class OVPNFile(object):
       values.append(val)
       self.content[key] = list(set(values))
 
+   def loadblock(self, filestream, delimiter):
+      filecontent = ""
+      try:
+         filestream.seek(0)
+         for line in filestream:
+            filecontent+=line
+         filecontent = filecontent.replace("\n", "").strip()
+         cablock = re.search('<' + delimiter + '>(.+)</' + delimiter + '>', filecontent)
+         self.content[delimiter] = [ cablock.group(1)+"\n" ]
+      except StopIteration:
+        pass
+
 
    def load(self, filestream):
       self.__init__()
       try:
-        for line in filestream:
+         for line in filestream:
             self._parseLine(line)
+         # Load ca & key data directly from config
+         self.loadblock(filestream, 'ca')
+         self.loadblock(filestream, 'cert')
+         self.loadblock(filestream, 'key')
       except StopIteration:
         pass
 
